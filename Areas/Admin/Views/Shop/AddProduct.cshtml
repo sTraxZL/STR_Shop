@@ -6,10 +6,17 @@
 
 <h2>Add Product</h2>
 
-@using (Html.BeginForm()) 
+@if (TempData["SM"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SM"]
+    </div>
+}
+
+@using (Html.BeginForm("AddProduct", "Shop", FormMethod.Post, new { enctype = "multipart/form-data"}))
 {
     @Html.AntiForgeryToken()
-    
+
     <div class="form-horizontal">
 
         <hr />
@@ -26,7 +33,7 @@
         <div class="form-group">
             @Html.LabelFor(model => model.Discription, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.TextAreaFor(model => model.Discription,  new { @class = "form-control" } )
+                @Html.TextAreaFor(model => model.Discription, new { @class = "form-control" })
                 @Html.ValidationMessageFor(model => model.Discription, "", new { @class = "text-danger" })
             </div>
         </div>
@@ -43,7 +50,7 @@
         <div class="form-group">
             @Html.LabelFor(model => model.CategoryId, htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.DropDownListFor(model => model.CategoryId, Model.Categories,"Select Category", new { htmlAttributes = new { @class = "form-control" } })
+                @Html.DropDownListFor(model => model.CategoryId, Model.Categories, "Select Category", new { htmlAttributes = new { @class = "form-control" } })
                 @Html.ValidationMessageFor(model => model.CategoryId, "", new { @class = "text-danger" })
             </div>
         </div>
@@ -52,7 +59,7 @@
             <label class="control-label col-md-2">Product image</label>
             <div class="col-md-10">
                 <input type="file" , name="file" id="imageUpload" />
-                <img id="imgpreview" src="~/Content/img/no_image.png"/>
+                <img id="imgpreview" src="~/Content/img/no_image.png" />
             </div>
         </div>
 
@@ -69,6 +76,6 @@
 </div>
 
 @section Scripts
-{  
-   <script src="~/Content/ShopJS/AddProductScript.js"></script>
+{
+    <script src="~/Content/ShopJS/AddProductScript.js"></script>
 }

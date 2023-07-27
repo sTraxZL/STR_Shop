@@ -38,7 +38,6 @@ namespace STR_Shop.Models.ViewModels.Shop
         [Required]
         public string Discription { get; set; }
         public decimal Price { get; set; }
-        [Required]
         public string CategoryName { get; set; }
         [Required]
         [DisplayName("Category")]
