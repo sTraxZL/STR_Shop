@@ -1,4 +1,5 @@
-﻿using STR_Shop.Models.Data;
+﻿using PagedList;
+using STR_Shop.Models.Data;
 using STR_Shop.Models.ViewModels.Shop;
 using System;
 using System.Collections.Generic;
@@ -157,6 +158,7 @@ namespace STR_Shop.Areas.Admin.Controllers
             return View(model);
         }
 
+        //Добавление товаров
         // POST: Admin/Shop/AddProduct
         [HttpPost]
         public ActionResult AddProduct(ProductVM model, HttpPostedFileBase file)
@@ -298,8 +300,8 @@ namespace STR_Shop.Areas.Admin.Controllers
 
                 // Назначить 2 пути, к оригиналу и уменьшинному варианту изображения
 
-                var path = string.Format($"{pathString2}\\imageName");
-                var path2 = string.Format($"{pathString3}\\imageName");
+                var path = string.Format($"{pathString2}\\{imageName}");
+                var path2 = string.Format($"{pathString3}\\{imageName}");
 
                 // Сохранить оригинальное изображение
                 file.SaveAs(path);
@@ -317,5 +319,37 @@ namespace STR_Shop.Areas.Admin.Controllers
             return RedirectToAction("AddProduct");
         }
 
+        //Список товаров
+        // POST: Admin/Shop/Products
+        [HttpGet]
+        public ActionResult Products(int? page, int? catId)
+        {
+            //Объявить список ProductVM list
+            List<ProductVM> listOfProductVM;
+
+            //Установить номер страницы
+            var pageNumber = page ?? 1;
+
+            using (Db db = new Db())
+            {
+                //Инициализировать и заполнить list данными
+                listOfProductVM = db.Products.ToArray()
+                    .Where(p => catId == null || catId == 0 || p.CategoryId == catId)
+                    .Select(p => new ProductVM(p))
+                    .ToList();
+
+                //Заполнить категории данными
+                ViewBag.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+
+                //Установить выбранную категорию
+                ViewBag.SelectedCat = catId.ToString();
+            }
+            //Установить постраничную навигацию
+            var onePageOfProducts = listOfProductVM.ToPagedList(pageNumber, 3);
+            ViewBag.onePageOfProducts = onePageOfProducts;
+
+            //Вернуть представление с данными
+            return View(listOfProductVM);
+        }
     }
 }
