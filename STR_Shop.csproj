@@ -523,6 +523,7 @@
     <Content Include="Areas\Admin\Views\Shop\Categories.cshtml" />
     <Content Include="Areas\Admin\Views\Shop\AddProduct.cshtml" />
     <Content Include="Areas\Admin\Views\Shop\Products.cshtml" />
+    <Content Include="Areas\Admin\Views\Shop\EditProduct.cshtml" />
     <None Include="Scripts\bundles\jquery\jquery-3.6.4.intellisense.js" />
     <Content Include="Scripts\bundles\jquery\jquery-3.6.4.js" />
     <Content Include="Scripts\bundles\jquery\jquery-3.6.4.min.js" />

@@ -320,7 +320,7 @@ namespace STR_Shop.Areas.Admin.Controllers
         }
 
         //Список товаров
-        // POST: Admin/Shop/Products
+        // GET: Admin/Shop/Products/id
         [HttpGet]
         public ActionResult Products(int? page, int? catId)
         {
@@ -351,5 +351,105 @@ namespace STR_Shop.Areas.Admin.Controllers
             //Вернуть представление с данными
             return View(listOfProductVM);
         }
+
+        //Редактирование товаров
+        // GET: Admin/Shop/EditProduct
+        public ActionResult EditProduct(int? id)
+        {
+            //Объявить модель ProductVM
+            ProductVM product = new ProductVM();
+
+            using (Db db = new Db())
+            {
+                //Получить продукт
+                ProductDTO dto = db.Products.Find(id);
+
+                //Проверить валидность продукта
+                if (dto == null)
+                {
+                    return Content("That product is not exist");
+                }
+                else
+                {
+                    //Инициализировать модель данными
+                    product = new ProductVM(dto);
+
+                    //Создать список категорий (list)
+                    product.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+
+                    //Получить все изображения из галереи
+                    product.GalleryImages = Directory
+                        .EnumerateFiles(Server.MapPath("~/.Images/Uploads/Products/" + id + "/Gallery/Thumbs"))
+                        .Select(fn => Path.GetFileName(fn));
+                }
+            }
+            //Вернуть модель в представление
+            return View(product);
+        }
+
+
+        //Редактирование товаров
+        // POST: Admin/Shop/EditProduct
+        [HttpPost]
+        public ActionResult EditProduct(ProductVM model, HttpPostedFileBase file)
+        {
+            //Получить id продукта
+            int id = model.Id;
+
+            using (Db db = new Db())
+            {
+                //Заполнить список продуктами и изображениями
+                model.Categories = new SelectList(db.Categories.ToList(), "Id", "Name");
+            }
+            model.GalleryImages = Directory
+                        .EnumerateFiles(Server.MapPath("~/.Images/Uploads/Products/" + id + "/Gallery/Thumbs"))
+                        .Select(fn => Path.GetFileName(fn));
+
+            //Проверить модель на валидность
+            if(!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            using (Db db = new Db())
+            {
+                //Проверить имя продукта на уникальность
+                if (db.Products.Where(p => p.Id != id).Any(p => p.Name == model.Name))
+                {
+                    ModelState.AddModelError("", "That product name is taken");
+                    return View(model);
+                }
+            }
+                //Внести изменения в базу
+            using(Db db = new Db())
+            {
+                 ProductDTO dto = db.Products.Find(id);
+
+                 dto.Name = model.Name;
+                 dto.Slug = model.Name.Replace(" ", "-").ToLower();
+                 dto.Discription = model.Discription;
+                 dto.Price = model.Price;
+                 dto.CategoryId = model.CategoryId;
+                 dto.ImageName = model.ImageName;
+
+                 CategoryDTO catDto = db.Categories.FirstOrDefault(p => p.Id == model.CategoryId);
+                 dto.CategoryName = catDto.Name;
+
+                 db.SaveChanges();
+            }
+
+            //Установить сообщение в TempData
+            TempData["SM"] = "You have edited a product";
+
+            //Реализовать обработки изображений 
+            #region Image upload
+
+            #endregion
+
+            //Переадресовать пользователя
+
+            return RedirectToAction("EditProduct");
+        }
+
     }
 }
