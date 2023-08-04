@@ -406,7 +406,7 @@ namespace STR_Shop.Areas.Admin.Controllers
                         .Select(fn => Path.GetFileName(fn));
 
             //Проверить модель на валидность
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return View(model);
             }
@@ -420,35 +420,131 @@ namespace STR_Shop.Areas.Admin.Controllers
                     return View(model);
                 }
             }
-                //Внести изменения в базу
-            using(Db db = new Db())
+            //Внести изменения в базу
+            using (Db db = new Db())
             {
-                 ProductDTO dto = db.Products.Find(id);
+                ProductDTO dto = db.Products.Find(id);
 
-                 dto.Name = model.Name;
-                 dto.Slug = model.Name.Replace(" ", "-").ToLower();
-                 dto.Discription = model.Discription;
-                 dto.Price = model.Price;
-                 dto.CategoryId = model.CategoryId;
-                 dto.ImageName = model.ImageName;
+                dto.Name = model.Name;
+                dto.Slug = model.Name.Replace(" ", "-").ToLower();
+                dto.Discription = model.Discription;
+                dto.Price = model.Price;
+                dto.CategoryId = model.CategoryId;
+                dto.ImageName = model.ImageName;
 
-                 CategoryDTO catDto = db.Categories.FirstOrDefault(p => p.Id == model.CategoryId);
-                 dto.CategoryName = catDto.Name;
+                CategoryDTO catDto = db.Categories.FirstOrDefault(p => p.Id == model.CategoryId);
+                dto.CategoryName = catDto.Name;
 
-                 db.SaveChanges();
+                db.SaveChanges();
             }
 
             //Установить сообщение в TempData
             TempData["SM"] = "You have edited a product";
 
-            //Реализовать обработки изображений 
+            //Реализовать обработку изображений 
             #region Image upload
 
+            //Проверить загрузку файла
+            if (file != null && file.ContentLength > 0)
+            {
+
+                //Получить расширение файла
+                string ext = file.ContentType.ToLower();
+
+                //Проверить расширение
+                if (ext != "image/jpg" &&
+                    ext != "image/jpeg" &&
+                    ext != "image/pjpeg" &&
+                    ext != "image/gif" &&
+                    ext != "image/x-png" &&
+                    ext != "image/png"
+                    )
+                {
+                    using (Db db = new Db())
+                    {
+                        ModelState.AddModelError("", "Image does not uploaded - wrong image extansion");
+                        return View(model);
+                    }
+                }
+
+                //Установить пути загрузки
+                var originalDirectory = new DirectoryInfo(string.Format($"{Server.MapPath(@"\")}.Images\\Uploads"));
+                var pathString1 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString());
+                var pathString2 = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString() + "\\Thumbs");
+
+                //Удалить файлы, если они уже присутствуют в директориях и сами директории
+                DirectoryInfo di1 = new DirectoryInfo(pathString1);
+                DirectoryInfo di2 = new DirectoryInfo(pathString2);
+
+                foreach(var file2 in di1.GetFiles())
+                {
+                    file2.Delete();
+                }
+
+                foreach (var file3 in di2.GetFiles())
+                {
+                    file3.Delete();
+                }
+
+                //Сохранить имя изображения
+                string imageName = file.FileName;
+
+                using (Db db = new Db())
+                {
+                    //Инициализировать модель
+                    ProductDTO dto = db.Products.Find(id);
+
+                    //Присвоить имя картинки
+                    dto.ImageName = imageName;
+
+                    //Сохранить изменения
+                    db.SaveChanges();
+                }
+                // Назначить 2 пути, к оригиналу и уменьшинному варианту изображения
+
+                var path = string.Format($"{pathString1}\\{imageName}");
+                var path2 = string.Format($"{pathString2}\\{imageName}");
+
+                // Сохранить оригинальное изображение
+                file.SaveAs(path);
+
+                // Создать и сохранить уменьшенное изображение
+                WebImage img = new WebImage(file.InputStream);
+                img.Resize(200, 200);
+                img.Save(path2);
+            }
             #endregion
 
             //Переадресовать пользователя
-
             return RedirectToAction("EditProduct");
+        }
+
+        //Удаление товара
+        // GET: Admin/Shop/DeleteProduct/id
+        [HttpGet]
+        public ActionResult DeleteProduct(int id)
+        {
+            using (Db db = new Db())
+            {
+                //Инициализировать DTO
+                ProductDTO dto = db.Products.Find(id);
+
+                //Удалить товар из базы данных
+                db.Products.Remove(dto);
+
+                //Сохранить изменения
+                db.SaveChanges();
+            }
+
+            //Удалить изображения, товара и дитректории
+            var originalDirectory = new DirectoryInfo(string.Format($"{Server.MapPath(@"\")}.Images\\Uploads"));
+            var pathString = Path.Combine(originalDirectory.ToString(), "Products\\" + id.ToString());
+
+            if (Directory.Exists(pathString))
+                Directory.Delete(pathString, true);
+
+            //Переадресовать пользователя
+            return RedirectToAction("Products");
         }
 
     }

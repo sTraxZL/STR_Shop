@@ -24,7 +24,10 @@
                         @Html.ActionLink("Sidebar", "EditSidebar", "Pages", "", new { @class = "navbar-brand" })
                     </li>
                     <li class="nav-item">
-                        <!--<a class="nav-link" href="#">Pricing</a>-->
+                        @Html.ActionLink("Categories", "Categories", "Shop", "", new { @class = "navbar-brand" })
+                    </li>
+                    <li class="nav-item">
+                        @Html.ActionLink("Products", "Products", "Shop", "", new { @class = "navbar-brand" })
                     </li>
                 </ul>
 
